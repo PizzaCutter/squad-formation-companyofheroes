@@ -54,23 +54,96 @@ public partial class Squad
         Leader = Members[0];
     }
 
+    private Soldier GetLocalLeader(Soldier soldier) => soldier.Role switch
+    {
+        SquadRole.SquadLeader   => null,
+        SquadRole.ElementLeader => Leader,
+        SquadRole.Follower      => GetElementLeader(soldier.Element) ?? Leader,
+        _                           => Leader,
+    };
+
+    private Soldier GetElementLeader(SquadElement element)
+    {
+        foreach(Soldier soldier in Members)
+        {
+            if (soldier.Element == element && (soldier.Role == SquadRole.SquadLeader || soldier.Role == SquadRole.ElementLeader))
+            {
+                return soldier;
+            }
+        }
+
+        return null;
+    }
+
     /// <summary>
     /// Called once when the player gives a move order.
     /// <paramref name="facing"/> is set when the player right-click-dragged a direction.
     /// </summary>
     private void OnMoveOrder(Vector3 destination, Vector3? facing)
     {
-        // Placeholder: the naive approach. Everyone paths to the same point.
-        foreach (Soldier soldier in Members)
+        Destination = destination;
+        DestinationFacing = facing;
+
+        Leader.DesiredFacing = DestinationFacing;
+        Leader.MoveTo(Destination.Value);
+    }
+
+    private int GetSlot(Soldier soldier)
+    {
+        if (soldier.Role != SquadRole.Follower)
         {
-            soldier.DesiredFacing = facing;
-            soldier.MoveTo(destination);
+            return 1;
         }
+
+        int slot = 1;
+        foreach (Soldier other in Members)
+        {
+            if (other == soldier)
+            {
+                break;
+            }
+
+            if (other.Element == soldier.Element && other.Role == SquadRole.Follower)
+            {
+                slot++;
+            }
+        }
+        return slot;
     }
 
     /// <summary>Called every physics tick while the squad has members.</summary>
     private void UpdateFormation(double delta)
     {
+        if (!Destination.HasValue && !DestinationFacing.HasValue)
+        {
+            return;
+        }
+
+        foreach (Soldier soldier in Members)
+        {
+            Soldier localLeader = GetLocalLeader(soldier);
+            if (localLeader == null)
+            {
+                continue;
+            }
+
+            Vector3 soldierPosition = localLeader.GlobalPosition;
+
+            Vector3 back = Leader.GlobalBasis.Z;              // +Z points behind the leader
+            float fan = Mathf.DegToRad(FanAngle);
+
+            Vector3 offsetVector = soldier.Element switch
+            {
+                SquadElement.LeftFlank  => back.Rotated(Vector3.Up, -fan),
+                SquadElement.RightFlank => back.Rotated(Vector3.Up,  fan),
+                _=> back,              // Core: straight behind
+            };
+
+            soldierPosition += offsetVector * DesiredSoldierOffset * GetSlot(soldier); 
+
+            soldier.MoveTo(soldierPosition);
+            soldier.DesiredFacing = DestinationFacing ?? Leader.Forward;
+        }
     }
 
     /// <summary>Called every physics tick while formation debug drawing is on (F1).</summary>
@@ -80,6 +153,17 @@ public partial class Squad
         {
             DebugDraw.Path(leader.CurrentPath, new Color(1f, 1f, 0.3f, 0.8f));
             DebugDraw.Circle(destination, 0.5f, Colors.Yellow);
+        }
+        
+        foreach(Soldier soldier in Members)
+        {
+            Soldier localLeader = GetLocalLeader(soldier);
+            if (localLeader == null)
+            {
+                continue;
+            }
+
+            DebugDraw.Arrow(soldier.GlobalPosition, localLeader.GlobalPosition, new Color(1f, 1f, 0.3f, 0.8f));
         }
     }
 }

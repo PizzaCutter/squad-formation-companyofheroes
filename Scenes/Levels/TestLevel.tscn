@@ -677,18 +677,21 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46, 0, 28)
 script = ExtResource("squad")
 SoldierScene = ExtResource("soldier")
 DisplayName = "Squad 1"
+InitialSize = 9
 
 [node name="Squad2" type="Node3D" parent="Squads" unique_id=24719212]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 0, 30)
 script = ExtResource("squad")
 SoldierScene = ExtResource("soldier")
 DisplayName = "Squad 2"
+InitialSize = 5
 
 [node name="Squad3" type="Node3D" parent="Squads" unique_id=109596769]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -52, 0, 18)
 script = ExtResource("squad")
 SoldierScene = ExtResource("soldier")
 DisplayName = "Squad 3"
+InitialSize = 3
 
 [node name="RtsCamera" type="Node3D" parent="." unique_id=1082595527]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 0, 20)

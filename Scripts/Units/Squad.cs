@@ -14,6 +14,8 @@ public partial class Squad : Node3D
     [Export] public string DisplayName { get; set; } = "Squad";
     [Export(PropertyHint.Range, "1,12")] public int InitialSize { get; set; } = 6;
     [Export(PropertyHint.Range, "1,12")] public int MaxSize { get; set; } = 9;
+    [Export(PropertyHint.Range, "0,10")] public float DesiredSoldierOffset { get; set; } = 2;
+    [Export(PropertyHint.Range, "0,90")] public float FanAngle { get; set; } = 30f;
 
     public IReadOnlyList<Soldier> Members => _members;
 

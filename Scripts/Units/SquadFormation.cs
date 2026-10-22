@@ -26,11 +26,30 @@ public partial class Squad
     /// </summary>
     private void AssignRoles()
     {
-        // Placeholder: the first soldier leads, nobody else has a role.
+        // No special logic just assigning by first come first served
+        SquadRole Role = SquadRole.SquadLeader;
+        SquadElement Elements = SquadElement.Core;
+
         for (int i = 0; i < Members.Count; i++)
         {
-            Members[i].Element = i == 0 ? SquadElement.Core : SquadElement.Unassigned;
-            Members[i].Role = i == 0 ? SquadRole.SquadLeader : SquadRole.Unassigned;
+            Members[i].Role = Role;
+            Members[i].Element = Elements;
+
+            Elements++;
+            if ((int)Elements > (int)SquadElement.RightFlank)
+            {
+                Elements = SquadElement.LeftFlank;
+            }
+
+            if (Role == SquadRole.ElementLeader && Elements == SquadElement.RightFlank)
+            {
+                continue;
+            }
+
+            if (Role < SquadRole.Follower)
+            {
+                Role++;
+            }
         }
         Leader = Members[0];
     }

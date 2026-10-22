@@ -17,6 +17,11 @@ public partial class Squad : Node3D
     [Export(PropertyHint.Range, "0,10")] public float DesiredSoldierOffset { get; set; } = 2;
     [Export(PropertyHint.Range, "0,90")] public float FanAngle { get; set; } = 30f;
     [Export(PropertyHint.Range, "0,10")] public float LookAheadSeconds { get; set; } = 2f;
+    [Export(PropertyHint.Range, "0,1")] public float MinMovementSpeedMultiplier { get; set; } = 0.8f;
+    [Export(PropertyHint.Range, "0,2")] public float MaxMovementSpeedMultiplier { get; set; } = 1.2f;
+    [Export(PropertyHint.Range, "0,100")] public float MovementSpeedMultiplierInterpolationSpeed { get; set; } = 5.0f;
+    [Export(PropertyHint.Range, "0.1,100")] public float CatchupDistance { get; set; } = 5.0f;
+
 
     public IReadOnlyList<Soldier> Members => _members;
 

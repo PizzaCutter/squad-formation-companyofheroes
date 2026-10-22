@@ -24,6 +24,7 @@ public partial class Squad
     Vector3 PredictedAnchorLocation = Vector3.Zero;
     Vector3 PredictedHeading = Vector3.Zero;
     Array<Vector3> PredictedLocations = new Array<Vector3>();
+    Array<Vector3> ReferenceLocations = new Array<Vector3>();
     // ~DEBUG VARIABLES FOR BETTER VISUALIZATION
 
     /// <summary>
@@ -167,7 +168,9 @@ public partial class Squad
 
         PredictedAnchorLocation = anchor;
         PredictedHeading = heading;
+
         PredictedLocations.Clear();
+        ReferenceLocations.Clear();
 
         foreach (Soldier soldier in Members)
         {
@@ -185,14 +188,26 @@ public partial class Squad
             };
 
             Vector3 soldierPosition = anchor + offsetVector * DesiredSoldierOffset * GetSlot(soldier); 
+            Vector3 referencePosition = Leader.GlobalPosition + offsetVector * DesiredSoldierOffset * GetSlot(soldier);
 
             PredictedLocations.Add(soldierPosition);
+            ReferenceLocations.Add(referencePosition);
 
             if (soldier.GlobalPosition.DistanceTo(soldierPosition) > 1.0f)
             {
                 soldier.MoveTo(soldierPosition);
                 soldier.DesiredFacing = DestinationFacing;
             }
+
+            Vector3 soldierToReference = (referencePosition - soldier.GlobalPosition).Flat();
+            float along = soldierToReference.Dot(PredictedHeading);
+            float t = Mathf.Clamp(Mathf.Abs(along) / CatchupDistance, 0f, 1f);
+            float speedMultiplierTarget = along > 0 
+                ? Mathf.Lerp(1f, MaxMovementSpeedMultiplier, t)
+                : Mathf.Lerp(1f, MinMovementSpeedMultiplier, t);
+            
+            // smoothing out the movement speed up/down
+            soldier.SpeedMultiplier = (float)Mathf.MoveToward(soldier.SpeedMultiplier, speedMultiplierTarget, MovementSpeedMultiplierInterpolationSpeed * delta);
         }
     }
 
@@ -214,11 +229,15 @@ public partial class Squad
                 continue;
             }
 
-            DebugDraw.Arrow(soldier.GlobalPosition, localLeader.GlobalPosition, Colors.Blue.Lightened(0.5f));
+            DebugDraw.Arrow(soldier.GlobalPosition, localLeader.GlobalPosition, Colors.Blue.Lightened(0.2f));
+
+            Color SpeedMultiplierTextColor = soldier.SpeedMultiplier > 1f ? Colors.Green : Colors.Red;
+            DebugDraw.Text(soldier.GlobalPosition + new Vector3(0f, 1f, 0f), $"{soldier.SpeedMultiplier:F2}", SpeedMultiplierTextColor);
 
             if (PredictedLocations.Count > index)
             {
                 DebugDraw.Circle(PredictedLocations[index], 0.5f, Colors.Orange);
+                DebugDraw.Circle(ReferenceLocations[index], 0.5f, Colors.Black.Lightened(0.5f));
             }
 
             index++;

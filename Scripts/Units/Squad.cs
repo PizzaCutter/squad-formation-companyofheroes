@@ -16,6 +16,7 @@ public partial class Squad : Node3D
     [Export(PropertyHint.Range, "1,12")] public int MaxSize { get; set; } = 9;
     [Export(PropertyHint.Range, "0,10")] public float DesiredSoldierOffset { get; set; } = 2;
     [Export(PropertyHint.Range, "0,90")] public float FanAngle { get; set; } = 30f;
+    [Export(PropertyHint.Range, "0,10")] public float LookAheadSeconds { get; set; } = 2f;
 
     public IReadOnlyList<Soldier> Members => _members;
 

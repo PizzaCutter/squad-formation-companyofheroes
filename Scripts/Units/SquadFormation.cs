@@ -95,7 +95,7 @@ public partial class Squad
             return 1;
         }
 
-        int slot = 1;
+        int slot = 2;
         foreach (Soldier other in Members)
         {
             if (other == soldier)
@@ -111,6 +111,38 @@ public partial class Squad
         return slot;
     }
 
+    private (Vector3 outPosition, Vector3 outHeading) GetPredictedLocationAhead(Soldier inSoldier, float distanceAhead)
+    {
+        Vector3 outPosition = inSoldier.GlobalPosition;
+        Vector3 outHeading = inSoldier.DesiredFacing ?? inSoldier.Forward;
+
+        Vector3[] path = inSoldier.CurrentPath;
+        if (inSoldier.HasArrived || path.IsEmpty())
+        {
+            return (outPosition, outHeading);
+        }
+
+        for (int i = inSoldier.CurrentPathIndex; i < path.Length; i++)
+        {
+            Vector3 segment = (path[i] - outPosition).Flat();
+            float length = segment.Length();
+            if (Mathf.IsZeroApprox(length))
+            {
+                continue;
+            }
+
+            if (distanceAhead <= length)
+            {
+                return (outPosition + outHeading * distanceAhead, outHeading);
+            }
+
+            distanceAhead -= length;
+            outPosition = path[i];
+        }
+
+        return (outPosition, outHeading);
+    }
+
     /// <summary>Called every physics tick while the squad has members.</summary>
     private void UpdateFormation(double delta)
     {
@@ -118,6 +150,12 @@ public partial class Squad
         {
             return;
         }
+
+        // Here we need to look ahead of where leader will be instead of just taking current position
+        var (anchor, heading) = GetPredictedLocationAhead(Leader, Leader.MoveSpeed * LookAheadSeconds);
+        Vector3 back = -heading;              // +Z points behind the leader
+
+        float fan = Mathf.DegToRad(FanAngle);
 
         foreach (Soldier soldier in Members)
         {
@@ -127,11 +165,6 @@ public partial class Squad
                 continue;
             }
 
-            Vector3 soldierPosition = localLeader.GlobalPosition;
-
-            Vector3 back = Leader.GlobalBasis.Z;              // +Z points behind the leader
-            float fan = Mathf.DegToRad(FanAngle);
-
             Vector3 offsetVector = soldier.Element switch
             {
                 SquadElement.LeftFlank  => back.Rotated(Vector3.Up, -fan),
@@ -139,10 +172,13 @@ public partial class Squad
                 _=> back,              // Core: straight behind
             };
 
-            soldierPosition += offsetVector * DesiredSoldierOffset * GetSlot(soldier); 
+            Vector3 soldierPosition = anchor + offsetVector * DesiredSoldierOffset * GetSlot(soldier); 
 
-            soldier.MoveTo(soldierPosition);
-            soldier.DesiredFacing = DestinationFacing ?? Leader.Forward;
+            if (soldier.GlobalPosition.DistanceTo(soldierPosition) > 1.0f)
+            {
+                soldier.MoveTo(soldierPosition);
+                soldier.DesiredFacing = DestinationFacing ?? Leader.Forward;
+            }
         }
     }
 
@@ -163,6 +199,7 @@ public partial class Squad
                 continue;
             }
 
+            DebugDraw.Arrow(soldier.GlobalPosition, soldier.Target , new Color(0f, 1f, 0.0f, 0.8f));
             DebugDraw.Arrow(soldier.GlobalPosition, localLeader.GlobalPosition, new Color(1f, 1f, 0.3f, 0.8f));
         }
     }

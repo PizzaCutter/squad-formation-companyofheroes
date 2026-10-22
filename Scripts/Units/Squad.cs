@@ -74,7 +74,7 @@ public partial class Squad : Node3D
     // ---------------------------------------------------------------- orders
 
     /// <summary>Called by the player controller. <paramref name="destination"/> is on the navmesh.</summary>
-    public void IssueMoveOrder(Vector3 destination, Vector3? facing)
+    public void IssueMoveOrder(Vector3 destination, Vector3 facing)
     {
         Destination = destination;
         DestinationFacing = facing;

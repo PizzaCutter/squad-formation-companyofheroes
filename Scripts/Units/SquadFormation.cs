@@ -1,4 +1,5 @@
 using Godot;
+using Godot.Collections;
 
 /// <summary>
 /// ===== YOUR FILE =====
@@ -19,6 +20,12 @@ using Godot;
 /// </summary>
 public partial class Squad
 {
+    // DEBUG VARIABLES FOR BETTER VISUALIZATION
+    Vector3 PredictedAnchorLocation = Vector3.Zero;
+    Vector3 PredictedHeading = Vector3.Zero;
+    Array<Vector3> PredictedLocations = new Array<Vector3>();
+    // ~DEBUG VARIABLES FOR BETTER VISUALIZATION
+
     /// <summary>
     /// Called on spawn, on every death and on every reinforcement.
     /// Split the squad into core / left flank / right flank and pick a leader for each element.
@@ -79,7 +86,7 @@ public partial class Squad
     /// Called once when the player gives a move order.
     /// <paramref name="facing"/> is set when the player right-click-dragged a direction.
     /// </summary>
-    private void OnMoveOrder(Vector3 destination, Vector3? facing)
+    private void OnMoveOrder(Vector3 destination, Vector3 facing)
     {
         Destination = destination;
         DestinationFacing = facing;
@@ -114,7 +121,7 @@ public partial class Squad
     private (Vector3 outPosition, Vector3 outHeading) GetPredictedLocationAhead(Soldier inSoldier, float distanceAhead)
     {
         Vector3 outPosition = inSoldier.GlobalPosition;
-        Vector3 outHeading = inSoldier.DesiredFacing ?? inSoldier.Forward;
+        Vector3 outHeading = inSoldier.DesiredFacing.Value;
 
         Vector3[] path = inSoldier.CurrentPath;
         if (inSoldier.HasArrived || path.IsEmpty())
@@ -131,6 +138,7 @@ public partial class Squad
                 continue;
             }
 
+            outHeading = segment.Flat().Normalized();
             if (distanceAhead <= length)
             {
                 return (outPosition + outHeading * distanceAhead, outHeading);
@@ -140,7 +148,7 @@ public partial class Squad
             outPosition = path[i];
         }
 
-        return (outPosition, outHeading);
+        return (outPosition, inSoldier.DesiredFacing.Value);
     }
 
     /// <summary>Called every physics tick while the squad has members.</summary>
@@ -156,6 +164,10 @@ public partial class Squad
         Vector3 back = -heading;              // +Z points behind the leader
 
         float fan = Mathf.DegToRad(FanAngle);
+
+        PredictedAnchorLocation = anchor;
+        PredictedHeading = heading;
+        PredictedLocations.Clear();
 
         foreach (Soldier soldier in Members)
         {
@@ -174,10 +186,12 @@ public partial class Squad
 
             Vector3 soldierPosition = anchor + offsetVector * DesiredSoldierOffset * GetSlot(soldier); 
 
+            PredictedLocations.Add(soldierPosition);
+
             if (soldier.GlobalPosition.DistanceTo(soldierPosition) > 1.0f)
             {
                 soldier.MoveTo(soldierPosition);
-                soldier.DesiredFacing = DestinationFacing ?? Leader.Forward;
+                soldier.DesiredFacing = DestinationFacing;
             }
         }
     }
@@ -187,10 +201,11 @@ public partial class Squad
     {
         if (Destination is Vector3 destination && Leader is Soldier leader && !leader.HasArrived)
         {
-            DebugDraw.Path(leader.CurrentPath, new Color(1f, 1f, 0.3f, 0.8f));
-            DebugDraw.Circle(destination, 0.5f, Colors.Yellow);
+            DebugDraw.Path(leader.CurrentPath, Colors.Green);
+            DebugDraw.Circle(destination, 0.5f, Colors.Green);
         }
         
+        int index = 0;
         foreach(Soldier soldier in Members)
         {
             Soldier localLeader = GetLocalLeader(soldier);
@@ -199,8 +214,14 @@ public partial class Squad
                 continue;
             }
 
-            DebugDraw.Arrow(soldier.GlobalPosition, soldier.Target , new Color(0f, 1f, 0.0f, 0.8f));
-            DebugDraw.Arrow(soldier.GlobalPosition, localLeader.GlobalPosition, new Color(1f, 1f, 0.3f, 0.8f));
+            DebugDraw.Arrow(soldier.GlobalPosition, localLeader.GlobalPosition, Colors.Blue.Lightened(0.5f));
+
+            if (PredictedLocations.Count > index)
+            {
+                DebugDraw.Circle(PredictedLocations[index], 0.5f, Colors.Orange);
+            }
+
+            index++;
         }
     }
 }

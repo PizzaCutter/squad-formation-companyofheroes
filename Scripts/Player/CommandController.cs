@@ -214,15 +214,23 @@ public partial class CommandController : Node
         _rightDownAt = null;
 
         Vector3 destination = _rightDownWorld;
-        Vector3? facing = null;
+        Vector3 facing = Vector3.Zero;
         if (GroundUnderMouse() is Vector3 release && release.Flat().DistanceTo(destination.Flat()) > FacingDragMinMeters)
         {
             facing = (release - destination).Flat().Normalized();
+        }else
+        {
+            Squad firstSquad = _selected.First();
+            if (firstSquad != null)
+            {
+                facing = (destination - firstSquad.Leader.GlobalPosition).Flat().Normalized();
+            }
         }
+
         IssueOrder(destination, facing);
     }
 
-    private void IssueOrder(Vector3 destination, Vector3? facing)
+    private void IssueOrder(Vector3 destination, Vector3 facing)
     {
         if (_selected.Count == 0)
         {

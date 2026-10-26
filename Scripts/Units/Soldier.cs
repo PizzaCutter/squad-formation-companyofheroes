@@ -137,6 +137,8 @@ public partial class Soldier : CharacterBody3D
 
         if (Agent.AvoidanceEnabled)
         {
+            // Arrived soldiers outrank moving ones so they hold their spot and movers steer around them.
+            Agent.AvoidancePriority = HasArrived ? 1.0f : 0.5f;
             Agent.Velocity = desired;
             desired = _avoidanceVelocity;
         }

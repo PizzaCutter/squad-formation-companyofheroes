@@ -1,6 +1,6 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://djo2wuegn4rks"]
 
-[ext_resource type="Script" path="res://Scripts/Units/Soldier.cs" id="1_soldier"]
+[ext_resource type="Script" uid="uid://dykb3d2osfhra" path="res://Scripts/Units/Soldier.cs" id="1_soldier"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 radius = 0.3
@@ -28,38 +28,38 @@ outer_radius = 0.55
 shading_mode = 0
 albedo_color = Color(0.4, 1, 0.5, 1)
 
-[node name="Soldier" type="CharacterBody3D"]
+[node name="Soldier" type="CharacterBody3D" unique_id=1402246809]
 collision_layer = 2
 collision_mask = 9
 script = ExtResource("1_soldier")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=378760695]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_body")
 
-[node name="Visual" type="Node3D" parent="."]
+[node name="Visual" type="Node3D" parent="." unique_id=1766326992]
 
-[node name="Body" type="MeshInstance3D" parent="Visual"]
+[node name="Body" type="MeshInstance3D" parent="Visual" unique_id=1366990936]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
 mesh = SubResource("CapsuleMesh_body")
 
-[node name="Head" type="MeshInstance3D" parent="Visual"]
+[node name="Head" type="MeshInstance3D" parent="Visual" unique_id=1600743341]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
 mesh = SubResource("SphereMesh_head")
 
-[node name="Rifle" type="MeshInstance3D" parent="Visual"]
+[node name="Rifle" type="MeshInstance3D" parent="Visual" unique_id=781493263]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.22, 1.1, -0.3)
 mesh = SubResource("BoxMesh_rifle")
 surface_material_override/0 = SubResource("Material_rifle")
 
-[node name="SelectionRing" type="MeshInstance3D" parent="."]
+[node name="SelectionRing" type="MeshInstance3D" parent="." unique_id=334420659]
 transform = Transform3D(1, 0, 0, 0, 0.3, 0, 0, 0, 1, 0, 0.04, 0)
 visible = false
 cast_shadow = 0
 mesh = SubResource("TorusMesh_ring")
 surface_material_override/0 = SubResource("Material_ring")
 
-[node name="RoleLabel" type="Label3D" parent="."]
+[node name="RoleLabel" type="Label3D" parent="." unique_id=550995407]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
 pixel_size = 0.004
 billboard = 1
@@ -69,13 +69,13 @@ outline_render_priority = 4
 font_size = 48
 outline_size = 14
 
-[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=716736208]
 path_desired_distance = 0.6
-target_desired_distance = 0.35
+target_desired_distance = 0.5
 path_max_distance = 3.0
+avoidance_enabled = true
 radius = 0.4
 neighbor_distance = 5.0
 max_neighbors = 8
 time_horizon_agents = 0.5
 max_speed = 7.0
-avoidance_enabled = true

@@ -66,12 +66,16 @@ public partial class Soldier : CharacterBody3D
     /// <summary>Index into <see cref="CurrentPath"/> of the waypoint the agent is walking towards.</summary>
     public int CurrentPathIndex => Agent.GetCurrentNavigationPathIndex();
 
+    public float Drift { get; private set; } = 0.0f;
+
     private static readonly Color CoreColor = new(0.30f, 0.50f, 0.95f);
     private static readonly Color LeftColor = new(0.35f, 0.80f, 0.35f);
     private static readonly Color RightColor = new(0.95f, 0.60f, 0.20f);
     private static readonly Color UnassignedColor = new(0.55f, 0.55f, 0.55f);
 
     private float _speedMultiplier = 1f;
+    private readonly float _driftPhase = GD.Randf() * Mathf.Tau;
+    private float _driftTime = 0f;
     private bool _hasOrder;
     private SquadElement _element;
     private SquadRole _role;
@@ -129,6 +133,17 @@ public partial class Soldier : CharacterBody3D
     public override void _PhysicsProcess(double delta)
     {
         float dt = (float)delta;
+
+        // Sine with a random phase per soldier so they drift out of step. Stays
+        // within -MaxDriftRadius and MaxDriftRadius
+        if (!HasArrived)
+        {
+            _driftTime += dt;
+            if (Squad != null)
+            {
+                Drift = Mathf.Sin(_driftTime * Squad.DriftSpeed + _driftPhase) * Squad.MaxDriftRadius;
+            }
+        }
 
         Vector3 desired = Vector3.Zero;
         if (_hasOrder && !Agent.IsNavigationFinished())

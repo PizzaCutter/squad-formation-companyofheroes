@@ -21,6 +21,8 @@ public partial class Squad : Node3D
     [Export(PropertyHint.Range, "0,2")] public float MaxMovementSpeedMultiplier { get; set; } = 1.2f;
     [Export(PropertyHint.Range, "0,100")] public float MovementSpeedMultiplierInterpolationSpeed { get; set; } = 5.0f;
     [Export(PropertyHint.Range, "0.1,100")] public float CatchupDistance { get; set; } = 5.0f;
+    [Export(PropertyHint.Range, "0.1,10")] public float MaxDriftRadius{ get; set; } = 0.5f;
+    [Export(PropertyHint.Range, "0,10")] public float DriftSpeed { get; set; } = 0.5f;
 
 
     public IReadOnlyList<Soldier> Members => _members;

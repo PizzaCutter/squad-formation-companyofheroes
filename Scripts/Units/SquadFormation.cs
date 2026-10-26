@@ -210,7 +210,11 @@ public partial class Squad
                 _=> back,              // Core: straight behind
             };
 
-            Vector3 soldierPosition = anchor + offsetVector * DesiredSoldierOffset * GetSlot(soldier); 
+            // Adding "randomized" drift so the soldiers look less robotic
+            Vector3 drift = PredictedHeading * soldier.Drift;
+            Vector3 slotOffset = offsetVector * DesiredSoldierOffset * GetSlot(soldier) + drift;
+
+            Vector3 soldierPosition = anchor + slotOffset; 
             Vector3 referencePosition = Leader.GlobalPosition + offsetVector * DesiredSoldierOffset * GetSlot(soldier);
 
             // soldierPosition might be on the other side of a wall which might causes characters to path around a long way

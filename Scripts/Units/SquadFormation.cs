@@ -26,6 +26,7 @@ public partial class Squad
     Vector3 PredictedHeading = Vector3.Zero;
     Array<Vector3> PredictedLocations = new Array<Vector3>();
     Array<Vector3> ReferenceLocations = new Array<Vector3>();
+    const float AvoidanceDebugArrowScale = 0.5f;    // metres of arrow per m/s of velocity
     // ~DEBUG VARIABLES FOR BETTER VISUALIZATION
 
     /// <summary>
@@ -247,6 +248,23 @@ public partial class Squad
             DebugDraw.Circle(destination, 0.5f, Colors.Green);
         }
         
+        // Avoidance: white = wanted velocity, magenta = what avoidance gave back.
+        // Ring is the avoidance radius, red while arrived (high priority), grey while moving.
+        foreach (Soldier soldier in Members)
+        {
+            Vector3 origin = soldier.GlobalPosition + Vector3.Up * 0.1f;
+            DebugDraw.Circle(origin, soldier.Agent.Radius, soldier.HasArrived ? Colors.Red : Colors.Gray);
+
+            if (soldier.DesiredVelocity.LengthSquared() > 0.0001f)
+            {
+                DebugDraw.Arrow(origin, origin + soldier.DesiredVelocity * AvoidanceDebugArrowScale, Colors.White, 0.2f);
+            }
+            if (soldier.Agent.AvoidanceEnabled && soldier.AvoidanceVelocity.LengthSquared() > 0.0001f)
+            {
+                DebugDraw.Arrow(origin, origin + soldier.AvoidanceVelocity * AvoidanceDebugArrowScale, Colors.Magenta, 0.2f);
+            }
+        }
+
         int index = 0;
         foreach(Soldier soldier in Members)
         {

@@ -54,6 +54,12 @@ public partial class Soldier : CharacterBody3D
     public bool HasArrived => !_hasOrder || Agent.IsNavigationFinished();
     public float CurrentSpeed => Velocity.Flat().Length();
 
+    /// <summary>Velocity the soldier wants this tick, before avoidance adjusts it.</summary>
+    public Vector3 DesiredVelocity { get; private set; }
+
+    /// <summary>Velocity the avoidance returned. Only meaningful while avoidance is enabled.</summary>
+    public Vector3 AvoidanceVelocity => _avoidanceVelocity;
+
     /// <summary>The path the agent is currently following, in world space.</summary>
     public Vector3[] CurrentPath => Agent.GetCurrentNavigationPath();
 
@@ -134,6 +140,8 @@ public partial class Soldier : CharacterBody3D
                 desired = toNext.Normalized() * MoveSpeed * _speedMultiplier;
             }
         }
+
+        DesiredVelocity = desired;
 
         if (Agent.AvoidanceEnabled)
         {

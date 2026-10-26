@@ -1,3 +1,4 @@
+using System.Linq;
 using Godot;
 using Godot.Collections;
 
@@ -152,6 +153,27 @@ public partial class Squad
         return (outPosition, inSoldier.DesiredFacing.Value);
     }
 
+    private Vector3 SoftenSlot(Vector3 anchor, Vector3 target, float radius)
+    {
+        NavigationPathQueryParameters3D queryParams = new();
+        queryParams.Map = NavUtils.Map(this);
+        queryParams.StartPosition = anchor;
+        queryParams.TargetPosition = target;
+        // limits the A* search
+        queryParams.PathSearchMaxDistance = radius;
+        NavigationPathQueryResult3D queryResult = new();
+
+        NavigationServer3D.QueryPath(queryParams, queryResult);
+
+        // If no point is available at all then we stack on the leader
+        // this shouldn't really happen though
+        if (queryResult.Path.IsEmpty())
+        {
+            return anchor;
+        }
+        return queryResult.Path.Last();
+    }
+
     /// <summary>Called every physics tick while the squad has members.</summary>
     private void UpdateFormation(double delta)
     {
@@ -189,6 +211,11 @@ public partial class Squad
 
             Vector3 soldierPosition = anchor + offsetVector * DesiredSoldierOffset * GetSlot(soldier); 
             Vector3 referencePosition = Leader.GlobalPosition + offsetVector * DesiredSoldierOffset * GetSlot(soldier);
+
+            // soldierPosition might be on the other side of a wall which might causes characters to path around a long way
+            // so we do pathfind from leader final position with small area then pick that location
+            float searchRadius = 2.0f * (float)GetSlot(soldier);
+            soldierPosition = SoftenSlot(Leader.Target, soldierPosition, searchRadius);
 
             PredictedLocations.Add(soldierPosition);
             ReferenceLocations.Add(referencePosition);

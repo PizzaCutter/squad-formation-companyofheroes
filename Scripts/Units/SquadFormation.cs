@@ -175,6 +175,19 @@ public partial class Squad
         return queryResult.Path.Last();
     }
 
+    private Formation GetDesiredFormation()
+    {
+        TerrainZone targetZone = TerrainZone.QueryZone(Leader, Leader.GlobalPosition);
+        if (targetZone != null)
+        {
+            if (targetZone.FormationOverride != null)
+            {
+                return targetZone.FormationOverride;
+            }
+        }
+        return DefaultFormation;
+    }
+
     /// <summary>Called every physics tick while the squad has members.</summary>
     private void UpdateFormation(double delta)
     {
@@ -187,7 +200,10 @@ public partial class Squad
         var (anchor, heading) = GetPredictedLocationAhead(Leader, Leader.MoveSpeed * LookAheadSeconds);
         Vector3 back = -heading;              // +Z points behind the leader
 
-        float fan = Mathf.DegToRad(FanAngle);
+        Formation desiredFormation = GetDesiredFormation();
+        CurrentFormation = desiredFormation;
+
+        float fan = Mathf.DegToRad(desiredFormation.FanAngle);
 
         PredictedAnchorLocation = anchor;
         PredictedHeading = heading;
@@ -212,10 +228,10 @@ public partial class Squad
 
             // Adding "randomized" drift so the soldiers look less robotic
             Vector3 drift = PredictedHeading * soldier.Drift;
-            Vector3 slotOffset = offsetVector * DesiredSoldierOffset * GetSlot(soldier) + drift;
+            Vector3 slotOffset = offsetVector * desiredFormation.DesiredOffset * GetSlot(soldier) + drift;
 
             Vector3 soldierPosition = anchor + slotOffset; 
-            Vector3 referencePosition = Leader.GlobalPosition + offsetVector * DesiredSoldierOffset * GetSlot(soldier);
+            Vector3 referencePosition = Leader.GlobalPosition + offsetVector * desiredFormation.DesiredOffset * GetSlot(soldier);
 
             // soldierPosition might be on the other side of a wall which might causes characters to path around a long way
             // so we do pathfind from leader final position with small area then pick that location

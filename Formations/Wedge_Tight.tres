@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="Formation" format=3 uid="uid://dt84v50j3778r"]
+
+[ext_resource type="Script" uid="uid://xknf61q55658" path="res://Scripts/Units/Formation.cs" id="1_j61cf"]
+
+[resource]
+script = ExtResource("1_j61cf")
+Name = "Wedge_Tight"
+FanAngle = 5.0
+DesiredOffset = 3.0
+metadata/_custom_type_script = "uid://xknf61q55658"

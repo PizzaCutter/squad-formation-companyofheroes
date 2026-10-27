@@ -14,8 +14,7 @@ public partial class Squad : Node3D
     [Export] public string DisplayName { get; set; } = "Squad";
     [Export(PropertyHint.Range, "1,12")] public int InitialSize { get; set; } = 6;
     [Export(PropertyHint.Range, "1,12")] public int MaxSize { get; set; } = 9;
-    [Export(PropertyHint.Range, "0,10")] public float DesiredSoldierOffset { get; set; } = 2;
-    [Export(PropertyHint.Range, "0,90")] public float FanAngle { get; set; } = 30f;
+    [Export] public Formation DefaultFormation = new();
     [Export(PropertyHint.Range, "0,10")] public float LookAheadSeconds { get; set; } = 2f;
     [Export(PropertyHint.Range, "0,1")] public float MinMovementSpeedMultiplier { get; set; } = 0.8f;
     [Export(PropertyHint.Range, "0,2")] public float MaxMovementSpeedMultiplier { get; set; } = 1.2f;
@@ -44,6 +43,9 @@ public partial class Squad : Node3D
 
     /// <summary>Facing the player dragged out with the right mouse button. Null for a plain click.</summary>
     public Vector3? DestinationFacing { get; private set; }
+
+    /// <summary>The formation picked on the last formation update, for the HUD. Null before the first one.</summary>
+    public Formation CurrentFormation { get; private set; }
 
     private readonly List<Soldier> _members = new();
     private Soldier _leader;

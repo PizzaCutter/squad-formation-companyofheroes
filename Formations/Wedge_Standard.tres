@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="Formation" format=3 uid="uid://b1cx361akohas"]
+
+[ext_resource type="Script" uid="uid://xknf61q55658" path="res://Scripts/Units/Formation.cs" id="1_h4o6s"]
+
+[resource]
+script = ExtResource("1_h4o6s")
+metadata/_custom_type_script = "uid://xknf61q55658"

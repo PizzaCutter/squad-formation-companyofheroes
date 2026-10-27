@@ -24,6 +24,7 @@ public partial class TerrainZone : Area3D
     [Export] public FormationContext Context { get => _context; set { _context = value; Rebuild(); } }
     [Export] public Vector2 Size { get => _size; set { _size = value; Rebuild(); } }
     [Export] public int ZonePriority { get => _priority; set { _priority = value; Rebuild(); } }
+    [Export] public Formation FormationOverride = null; 
 
     private FormationContext _context;
     private Vector2 _size = new(10f, 10f);

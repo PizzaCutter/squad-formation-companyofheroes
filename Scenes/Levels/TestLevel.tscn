@@ -1,5 +1,7 @@
 [gd_scene format=3 uid="uid://bh3q4m7a2w5wf"]
 
+[ext_resource type="Resource" uid="uid://dt84v50j3778r" path="res://Formations/Wedge_Tight.tres" id="5_a1huo"]
+[ext_resource type="Resource" uid="uid://b1cx361akohas" path="res://Formations/Wedge_Standard.tres" id="8_cuare"]
 [ext_resource type="Script" uid="uid://doors0gn5yfm6" path="res://Scripts/World/BoxObstacle.cs" id="box"]
 [ext_resource type="Script" uid="uid://c4emtwxgobawq" path="res://Scripts/Player/RtsCamera.cs" id="cam"]
 [ext_resource type="Script" uid="uid://6i6j85d2sr06" path="res://Scripts/Player/CommandController.cs" id="cmd"]
@@ -7,7 +9,7 @@
 [ext_resource type="Shader" uid="uid://bipqk2u4lk3de" path="res://Shaders/ground_grid.gdshader" id="grid"]
 [ext_resource type="Script" uid="uid://do1n7yuahwqpr" path="res://Scripts/Player/Hud.cs" id="hud"]
 [ext_resource type="Script" uid="uid://vgueic0nwfhb" path="res://Scripts/World/LevelNavigation.cs" id="nav"]
-[ext_resource type="PackedScene" path="res://Scenes/Units/Soldier.tscn" id="soldier"]
+[ext_resource type="PackedScene" uid="uid://djo2wuegn4rks" path="res://Scenes/Units/Soldier.tscn" id="soldier"]
 [ext_resource type="Script" uid="uid://dqteg3hhjw8fo" path="res://Scripts/Units/Squad.cs" id="squad"]
 [ext_resource type="Script" uid="uid://b66cbwleedn26" path="res://Scripts/World/TerrainZone.cs" id="zone"]
 
@@ -615,6 +617,7 @@ script = ExtResource("zone")
 Context = 2
 Size = Vector2(14, 4)
 ZonePriority = 10
+FormationOverride = ExtResource("5_a1huo")
 
 [node name="AlleyNorthSouth" type="Area3D" parent="TerrainZones" unique_id=1962079146]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -9)
@@ -625,6 +628,7 @@ script = ExtResource("zone")
 Context = 2
 Size = Vector2(2.4, 10.4)
 ZonePriority = 10
+FormationOverride = ExtResource("5_a1huo")
 
 [node name="AlleyEastWest" type="Area3D" parent="TerrainZones" unique_id=1199364873]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56, 0, 9)
@@ -635,6 +639,7 @@ script = ExtResource("zone")
 Context = 2
 Size = Vector2(12.4, 2.4)
 ZonePriority = 10
+FormationOverride = ExtResource("5_a1huo")
 
 [node name="HedgeGap" type="Area3D" parent="TerrainZones" unique_id=1683077201]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 0, -10)
@@ -645,6 +650,7 @@ script = ExtResource("zone")
 Context = 2
 Size = Vector2(6, 4)
 ZonePriority = 10
+FormationOverride = ExtResource("5_a1huo")
 
 [node name="Enemies" type="Node3D" parent="." unique_id=340902904]
 
@@ -688,7 +694,7 @@ script = ExtResource("squad")
 SoldierScene = ExtResource("soldier")
 DisplayName = "Squad 1"
 InitialSize = 9
-FanAngle = 15.0
+DefaultFormation = ExtResource("8_cuare")
 
 [node name="Squad2" type="Node3D" parent="Squads" unique_id=24719212]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 0, 30)
@@ -696,7 +702,7 @@ script = ExtResource("squad")
 SoldierScene = ExtResource("soldier")
 DisplayName = "Squad 2"
 InitialSize = 5
-FanAngle = 15.0
+DefaultFormation = ExtResource("8_cuare")
 
 [node name="Squad3" type="Node3D" parent="Squads" unique_id=109596769]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -52, 0, 18)
@@ -704,7 +710,7 @@ script = ExtResource("squad")
 SoldierScene = ExtResource("soldier")
 DisplayName = "Squad 3"
 InitialSize = 3
-FanAngle = 15.0
+DefaultFormation = ExtResource("8_cuare")
 
 [node name="RtsCamera" type="Node3D" parent="." unique_id=1082595527]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 0, 20)

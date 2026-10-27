@@ -53,7 +53,9 @@ public partial class Hud : CanvasLayer
         AddChild(_status);
         _status.SetAnchorsPreset(Control.LayoutPreset.TopRight);
         _status.GrowHorizontal = Control.GrowDirection.Begin;
-        _status.Position = new Vector2(-16, 12);
+        _status.OffsetLeft = -16;
+        _status.OffsetRight = -16;
+        _status.OffsetTop = 12;
     }
 
     public override void _Process(double delta)
@@ -78,7 +80,7 @@ public partial class Hud : CanvasLayer
             {
                 context = TerrainZone.QueryContext(leader, leader.GlobalPosition).ToString();
             }
-            sb.AppendLine($"{squad.DisplayName}: {squad.Members.Count}/{squad.MaxSize}  {context}");
+            sb.AppendLine($"{squad.DisplayName}: {squad.Members.Count}/{squad.MaxSize}  {context}  {squad.CurrentFormation.Name}");
         }
         _status.Text = sb.ToString();
     }

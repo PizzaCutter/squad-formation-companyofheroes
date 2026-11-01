@@ -61,7 +61,20 @@ public partial class Squad
                 Role++;
             }
         }
+        // _leader rather than Leader: the getter already falls back to Members[0] once the old leader is dead
+        Soldier previousLeader = _leader;
         Leader = Members[0];
+
+        if (Leader != previousLeader)
+        {
+            // The new leader was walking to a follower slot, so hand it the squad's order
+            Leader.SpeedMultiplier = 1f;
+            if (Destination.HasValue)
+            {
+                Leader.DesiredFacing = DestinationFacing;
+                Leader.MoveTo(Destination.Value);
+            }
+        }
     }
 
     private Soldier GetLocalLeader(Soldier soldier) => soldier.Role switch
@@ -124,7 +137,8 @@ public partial class Squad
     private (Vector3 outPosition, Vector3 outHeading) GetPredictedLocationAhead(Soldier inSoldier, float distanceAhead)
     {
         Vector3 outPosition = inSoldier.GlobalPosition;
-        Vector3 outHeading = inSoldier.DesiredFacing.Value;
+        Vector3 fallbackHeading = inSoldier.DesiredFacing ?? inSoldier.Forward;
+        Vector3 outHeading = fallbackHeading;
 
         Vector3[] path = inSoldier.CurrentPath;
         if (inSoldier.HasArrived || path.IsEmpty())
@@ -151,7 +165,7 @@ public partial class Squad
             outPosition = path[i];
         }
 
-        return (outPosition, inSoldier.DesiredFacing.Value);
+        return (outPosition, fallbackHeading);
     }
 
     private Vector3 SoftenSlot(Vector3 anchor, Vector3 target, float radius)
@@ -200,6 +214,9 @@ public partial class Squad
         var (anchor, heading) = GetPredictedLocationAhead(Leader, Leader.MoveSpeed * LookAheadSeconds);
         Vector3 back = -heading;              // +Z points behind the leader
 
+        // Softening searches outward from here, so it has to sit on the navmesh
+        Vector3 navAnchor = NavUtils.ClosestPoint(this, anchor);
+
         Formation desiredFormation = GetDesiredFormation();
         CurrentFormation = desiredFormation;
 
@@ -234,9 +251,9 @@ public partial class Squad
             Vector3 referencePosition = Leader.GlobalPosition + offsetVector * desiredFormation.DesiredOffset * GetSlot(soldier);
 
             // soldierPosition might be on the other side of a wall which might causes characters to path around a long way
-            // so we do pathfind from leader final position with small area then pick that location
+            // so we do pathfind from the leader's predicted position with small area then pick that location
             float searchRadius = 2.0f * (float)GetSlot(soldier);
-            soldierPosition = SoftenSlot(Leader.Target, soldierPosition, searchRadius);
+            soldierPosition = SoftenSlot(navAnchor, soldierPosition, searchRadius);
 
             PredictedLocations.Add(soldierPosition);
             ReferenceLocations.Add(referencePosition);

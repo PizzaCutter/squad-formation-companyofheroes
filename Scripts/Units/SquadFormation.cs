@@ -70,6 +70,12 @@ public partial class Squad
                 Leader.MoveTo(Destination.Value);
             }
         }
+
+        // The squad changed shape, so hand out the destination spots again
+        if (_inDestinationFormation)
+        {
+            AssignDestinationSpots();
+        }
     }
 
     private int CountIn(SquadElement element) => Members.Count(s => s.Element == element);
@@ -109,6 +115,7 @@ public partial class Squad
     {
         Destination = destination;
         DestinationFacing = facing;
+        ExitDestinationFormation();
 
         Leader.DesiredFacing = DestinationFacing;
         Leader.MoveTo(Destination.Value);
@@ -218,6 +225,11 @@ public partial class Squad
             return;
         }
 
+        if (_inDestinationFormation || TryEnterDestinationFormation())
+        {
+            return;
+        }
+
         // Here we need to look ahead of where leader will be instead of just taking current position
         var (anchor, heading) = GetPredictedLocationAhead(Leader, Leader.MoveSpeed * LookAheadSeconds);
 
@@ -264,11 +276,8 @@ public partial class Squad
         }
     }
 
-    /// <summary>
-    /// Moves soldier to its slot behind its local leader's predicted position or goal and returns the softened goal.
-    /// </summary>
-    private Vector3 UpdateSoldierSlot(Soldier soldier, Soldier localLeader, Vector3 anchor, Vector3 navAnchor,
-        Vector3 heading, Formation formation, double delta)
+    /// <summary>Wedge offset of a soldier from its local leader, oriented along <paramref name="heading"/>.</summary>
+    private Vector3 GetFormationOffset(Soldier soldier, Vector3 heading, Formation formation)
     {
         Vector3 back = -heading;              // +Z points behind the leader
         float fan = Mathf.DegToRad(formation.FanAngle);
@@ -278,9 +287,17 @@ public partial class Squad
             SquadElement.RightFlank => back.Rotated(Vector3.Up,  fan),
             _ => back,              // Core: straight behind
         };
+        return offsetVector * formation.DesiredOffset * GetSlot(soldier);
+    }
 
+    /// <summary>
+    /// Moves soldier to its slot behind its local leader's predicted position or goal and returns the softened goal.
+    /// </summary>
+    private Vector3 UpdateSoldierSlot(Soldier soldier, Soldier localLeader, Vector3 anchor, Vector3 navAnchor,
+        Vector3 heading, Formation formation, double delta)
+    {
         int slot = GetSlot(soldier);
-        Vector3 formationOffset = offsetVector * formation.DesiredOffset * slot;
+        Vector3 formationOffset = GetFormationOffset(soldier, heading, formation);
 
         // Adding "randomized" drift so the soldiers look less robotic
         Vector3 drift = heading * soldier.Drift;
@@ -361,5 +378,7 @@ public partial class Squad
                 DebugDraw.Circle(reference, 0.5f, Colors.Black.Lightened(0.5f));
             }
         }
+
+        DrawDestinationDebug();
     }
 }

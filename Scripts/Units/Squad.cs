@@ -23,6 +23,13 @@ public partial class Squad : Node3D
     [Export(PropertyHint.Range, "0.1,10")] public float MaxDriftRadius{ get; set; } = 0.5f;
     [Export(PropertyHint.Range, "0,10")] public float DriftSpeed { get; set; } = 0.5f;
 
+    [ExportGroup("Destination")]
+    /// <summary>Shape at the destination. Leave empty to keep the formation the squad was moving in.</summary>
+    [Export] public Formation DestinationFormation { get; set; }
+    [Export(PropertyHint.Range, "0,50")] public float DestinationFormationDistance { get; set; } = 6f;
+    [Export(PropertyHint.Range, "0,10")] public float CoverSearchRadius { get; set; } = 3f;
+    [Export(PropertyHint.Range, "0.1,3")] public float ReservationRadius { get; set; } = 0.9f;
+
 
     public IReadOnlyList<Soldier> Members => _members;
 

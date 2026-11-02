@@ -51,6 +51,9 @@ public partial class Soldier : CharacterBody3D
 
     public Vector3 Target => Agent.TargetPosition;
     public bool HasOrder => _hasOrder;
+
+    /// <summary>Spot claimed in the destination formation. No other soldier may pick a spot near it.</summary>
+    public Vector3? ReservedSpot { get; set; }
     public bool HasArrived => !_hasOrder || Agent.IsNavigationFinished();
     public float CurrentSpeed => Velocity.Flat().Length();
 

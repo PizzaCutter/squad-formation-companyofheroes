@@ -34,34 +34,31 @@ public partial class Squad
     /// </summary>
     private void AssignRoles()
     {
-        // No special logic just assigning by first come first served
-        SquadRole Role = SquadRole.SquadLeader;
-        SquadElement Elements = SquadElement.Core;
-
-        for (int i = 0; i < Members.Count; i++)
+        // Soldiers keep their element; only newcomers and an empty core need one
+        foreach (Soldier soldier in Members.Where(s => s.Element == SquadElement.Unassigned))
         {
-            Members[i].Role = Role;
-            Members[i].Element = Elements;
-
-            Elements++;
-            if ((int)Elements > (int)SquadElement.RightFlank)
-            {
-                Elements = SquadElement.LeftFlank;
-            }
-
-            if (Role == SquadRole.ElementLeader && Elements == SquadElement.RightFlank)
-            {
-                continue;
-            }
-
-            if (Role < SquadRole.Follower)
-            {
-                Role++;
-            }
+            soldier.Element = CountIn(SquadElement.Core) == 0 ? SquadElement.Core : SmallestFlank();
         }
+
+        if (CountIn(SquadElement.Core) == 0)
+        {
+            // Promote the bigger flank's leader; its first follower steps up to lead the flank
+            Members.First(s => s.Element == LargestFlank()).Element = SquadElement.Core;
+        }
+
+        // The longest-serving soldier of each element leads it
+        HashSet<SquadElement> led = [];
+        foreach (Soldier soldier in Members)
+        {
+            bool first = led.Add(soldier.Element);
+            soldier.Role = !first ? SquadRole.Follower
+                : soldier.Element == SquadElement.Core ? SquadRole.SquadLeader
+                : SquadRole.ElementLeader;
+        }
+
         // _leader rather than Leader: the getter already falls back to Members[0] once the old leader is dead
         Soldier previousLeader = _leader;
-        Leader = Members[0];
+        Leader = Members.First(s => s.Role == SquadRole.SquadLeader);
 
         if (Leader != previousLeader)
         {
@@ -74,6 +71,14 @@ public partial class Squad
             }
         }
     }
+
+    private int CountIn(SquadElement element) => Members.Count(s => s.Element == element);
+
+    private SquadElement SmallestFlank() =>
+        CountIn(SquadElement.LeftFlank) <= CountIn(SquadElement.RightFlank) ? SquadElement.LeftFlank : SquadElement.RightFlank;
+
+    private SquadElement LargestFlank() =>
+        SmallestFlank() == SquadElement.LeftFlank ? SquadElement.RightFlank : SquadElement.LeftFlank;
 
     private Soldier GetLocalLeader(Soldier soldier) => soldier.Role switch
     {

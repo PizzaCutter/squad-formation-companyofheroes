@@ -173,8 +173,7 @@ public partial class Squad
             outPosition = path[i];
         }
 
-        // Ran out of path: keep the last segment's heading so the formation doesn't swing early
-        return (outPosition, outHeading);
+        return (outPosition, fallbackHeading);
     }
 
     private Vector3 SoftenSlot(Vector3 anchor, Vector3 target, float radius)

@@ -80,7 +80,7 @@ public partial class Hud : CanvasLayer
             {
                 context = TerrainZone.QueryContext(leader, leader.GlobalPosition).ToString();
             }
-            sb.AppendLine($"{squad.DisplayName}: {squad.Members.Count}/{squad.MaxSize}  {context}  {squad.CurrentFormation.Name}");
+            sb.AppendLine($"{squad.DisplayName}: {squad.Members.Count}/{squad.MaxSize}  {context}  {squad.CurrentFormation?.Name}");
         }
         _status.Text = sb.ToString();
     }

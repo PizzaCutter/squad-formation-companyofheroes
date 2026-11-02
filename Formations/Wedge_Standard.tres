@@ -4,4 +4,5 @@
 
 [resource]
 script = ExtResource("1_h4o6s")
+Name = "Wedge_Standard"
 metadata/_custom_type_script = "uid://xknf61q55658"

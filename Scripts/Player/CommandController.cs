@@ -213,18 +213,20 @@ public partial class CommandController : Node
         }
         _rightDownAt = null;
 
+        if (_selected.Count == 0)
+        {
+            return;
+        }
+
         Vector3 destination = _rightDownWorld;
-        Vector3 facing = Vector3.Zero;
+        Vector3 facing;
         if (GroundUnderMouse() is Vector3 release && release.Flat().DistanceTo(destination.Flat()) > FacingDragMinMeters)
         {
             facing = (release - destination).Flat().Normalized();
-        }else
+        }
+        else
         {
-            Squad firstSquad = _selected.First();
-            if (firstSquad != null)
-            {
-                facing = (destination - firstSquad.Leader.GlobalPosition).Flat().Normalized();
-            }
+            facing = (destination - _selected[0].Leader.GlobalPosition).Flat().Normalized();
         }
 
         IssueOrder(destination, facing);
@@ -232,11 +234,6 @@ public partial class CommandController : Node
 
     private void IssueOrder(Vector3 destination, Vector3 facing)
     {
-        if (_selected.Count == 0)
-        {
-            return;
-        }
-
         Color color = new(0.4f, 1f, 0.5f);
         Vector3 marker = destination + Vector3.Up * 0.1f;
         DebugDraw.Circle(marker, 0.6f, color, 24, 0.8f);

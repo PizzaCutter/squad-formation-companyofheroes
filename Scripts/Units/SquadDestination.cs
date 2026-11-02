@@ -16,6 +16,7 @@ public partial class Squad
         {
             return false;
         }
+        StopLeapfrog();
         _inDestinationFormation = true;
         CurrentFormation = DestinationFormation ?? GetDesiredFormation();
         AssignDestinationSpots();

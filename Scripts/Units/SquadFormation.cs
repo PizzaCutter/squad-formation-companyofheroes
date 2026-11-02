@@ -71,7 +71,8 @@ public partial class Squad
             }
         }
 
-        // The squad changed shape, so hand out the destination spots again
+        // The squad changed shape: the leapfrogger may be dead or promoted, and the destination spots need handing out again
+        StopLeapfrog();
         if (_inDestinationFormation)
         {
             AssignDestinationSpots();
@@ -116,6 +117,8 @@ public partial class Squad
         Destination = destination;
         DestinationFacing = facing;
         ExitDestinationFormation();
+        StopLeapfrog();
+        ResetLeapfrogCooldown();
 
         Leader.DesiredFacing = DestinationFacing;
         Leader.MoveTo(Destination.Value);
@@ -242,6 +245,8 @@ public partial class Squad
         PredictedLocations.Clear();
         ReferenceLocations.Clear();
 
+        UpdateLeapfrog(anchor, heading, desiredFormation, (float)delta);
+
         // Where each element's followers line up from
         Dictionary<SquadElement, (Vector3 anchor, Vector3 navAnchor)> elementAnchors = new()
         {
@@ -253,6 +258,13 @@ public partial class Squad
         {
             if (soldier.Role != SquadRole.ElementLeader)
             {
+                continue;
+            }
+            if (soldier == _leapfrogger)
+            {
+                // Off to cover; its followers line up behind the cover spot instead of the slot
+                Vector3 spot = soldier.ReservedSpot.Value;
+                elementAnchors[soldier.Element] = (spot, spot);
                 continue;
             }
             Vector3 goal = UpdateSoldierSlot(soldier, Leader, anchor, navAnchor, heading, desiredFormation, delta);
@@ -380,5 +392,6 @@ public partial class Squad
         }
 
         DrawDestinationDebug();
+        DrawLeapfrogDebug();
     }
 }

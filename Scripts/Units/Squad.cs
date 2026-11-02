@@ -30,6 +30,14 @@ public partial class Squad : Node3D
     [Export(PropertyHint.Range, "0,10")] public float CoverSearchRadius { get; set; } = 3f;
     [Export(PropertyHint.Range, "0.1,3")] public float ReservationRadius { get; set; } = 0.9f;
 
+    [ExportGroup("Leapfrog")]
+    [Export(PropertyHint.Range, "0,30")] public float LeapfrogCooldownMin { get; set; } = 4f;
+    [Export(PropertyHint.Range, "0,30")] public float LeapfrogCooldownMax { get; set; } = 6f;
+    [Export(PropertyHint.Range, "0,10")] public float LeapfrogHoldTime { get; set; } = 2f;
+    /// <summary>How far ahead of its slot an element leader looks for cover.</summary>
+    [Export(PropertyHint.Range, "0,10")] public float LeapfrogLookAhead { get; set; } = 2f;
+    [Export(PropertyHint.Range, "0,50")] public float LeapfrogMinDistanceToGoal { get; set; } = 12f;
+
 
     public IReadOnlyList<Soldier> Members => _members;
 

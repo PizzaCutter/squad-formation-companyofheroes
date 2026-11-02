@@ -1,6 +1,6 @@
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
-using Godot.Collections;
 
 /// <summary>
 /// ===== YOUR FILE =====
@@ -22,10 +22,8 @@ using Godot.Collections;
 public partial class Squad
 {
     // DEBUG VARIABLES FOR BETTER VISUALIZATION
-    Vector3 PredictedAnchorLocation = Vector3.Zero;
-    Vector3 PredictedHeading = Vector3.Zero;
-    Array<Vector3> PredictedLocations = new Array<Vector3>();
-    Array<Vector3> ReferenceLocations = new Array<Vector3>();
+    Dictionary<Soldier, Vector3> PredictedLocations = new();
+    Dictionary<Soldier, Vector3> ReferenceLocations = new();
     const float AvoidanceDebugArrowScale = 0.5f;    // metres of arrow per m/s of velocity
     // ~DEBUG VARIABLES FOR BETTER VISUALIZATION
 
@@ -111,6 +109,11 @@ public partial class Squad
         Leader.MoveTo(Destination.Value);
     }
 
+    /// <summary>
+    /// Squad leader returns 0
+    /// Element leaders returns 1
+    /// Followers then continue 2, 3, 4...
+    /// </summary>
     private int GetSlot(Soldier soldier)
     {
         if (soldier.Role != SquadRole.Follower)
@@ -118,7 +121,7 @@ public partial class Squad
             return 1;
         }
 
-        int slot = 2;
+        int slot = 1;
         foreach (Soldier other in Members)
         {
             if (other == soldier)
@@ -212,7 +215,6 @@ public partial class Squad
 
         // Here we need to look ahead of where leader will be instead of just taking current position
         var (anchor, heading) = GetPredictedLocationAhead(Leader, Leader.MoveSpeed * LookAheadSeconds);
-        Vector3 back = -heading;              // +Z points behind the leader
 
         // Softening searches outward from here, so it has to sit on the navmesh
         Vector3 navAnchor = NavUtils.ClosestPoint(this, anchor);
@@ -220,60 +222,90 @@ public partial class Squad
         Formation desiredFormation = GetDesiredFormation();
         CurrentFormation = desiredFormation;
 
-        float fan = Mathf.DegToRad(desiredFormation.FanAngle);
-
-        PredictedAnchorLocation = anchor;
-        PredictedHeading = heading;
-
         PredictedLocations.Clear();
         ReferenceLocations.Clear();
 
+        // Where each element's followers line up from
+        Dictionary<SquadElement, (Vector3 anchor, Vector3 navAnchor)> elementAnchors = new()
+        {
+            [SquadElement.Core] = (anchor, navAnchor),
+        };
+
+        // element leaders take their slot off the squad leader's predicted position
         foreach (Soldier soldier in Members)
         {
-            Soldier localLeader = GetLocalLeader(soldier);
-            if (localLeader == null)
+            if (soldier.Role != SquadRole.ElementLeader)
             {
                 continue;
             }
-
-            Vector3 offsetVector = soldier.Element switch
-            {
-                SquadElement.LeftFlank  => back.Rotated(Vector3.Up, -fan),
-                SquadElement.RightFlank => back.Rotated(Vector3.Up,  fan),
-                _=> back,              // Core: straight behind
-            };
-
-            // Adding "randomized" drift so the soldiers look less robotic
-            Vector3 drift = PredictedHeading * soldier.Drift;
-            Vector3 slotOffset = offsetVector * desiredFormation.DesiredOffset * GetSlot(soldier) + drift;
-
-            Vector3 soldierPosition = anchor + slotOffset; 
-            Vector3 referencePosition = Leader.GlobalPosition + offsetVector * desiredFormation.DesiredOffset * GetSlot(soldier);
-
-            // soldierPosition might be on the other side of a wall which might causes characters to path around a long way
-            // so we do pathfind from the leader's predicted position with small area then pick that location
-            float searchRadius = 2.0f * (float)GetSlot(soldier);
-            soldierPosition = SoftenSlot(navAnchor, soldierPosition, searchRadius);
-
-            PredictedLocations.Add(soldierPosition);
-            ReferenceLocations.Add(referencePosition);
-
-            if (soldier.GlobalPosition.DistanceTo(soldierPosition) > 1.0f)
-            {
-                soldier.MoveTo(soldierPosition);
-                soldier.DesiredFacing = DestinationFacing;
-            }
-
-            Vector3 soldierToReference = (referencePosition - soldier.GlobalPosition).Flat();
-            float along = soldierToReference.Dot(PredictedHeading);
-            float t = Mathf.Clamp(Mathf.Abs(along) / CatchupDistance, 0f, 1f);
-            float speedMultiplierTarget = along > 0 
-                ? Mathf.Lerp(1f, MaxMovementSpeedMultiplier, t)
-                : Mathf.Lerp(1f, MinMovementSpeedMultiplier, t);
-            
-            // smoothing out the movement speed up/down
-            soldier.SpeedMultiplier = (float)Mathf.MoveToward(soldier.SpeedMultiplier, speedMultiplierTarget, MovementSpeedMultiplierInterpolationSpeed * delta);
+            Vector3 goal = UpdateSoldierSlot(soldier, Leader, anchor, navAnchor, heading, desiredFormation, delta);
+            elementAnchors[soldier.Element] = (goal, goal);
         }
+
+        // followers take their slot of their element leader's goal
+        foreach (Soldier soldier in Members)
+        {
+            if (soldier.Role == SquadRole.SquadLeader || soldier.Role == SquadRole.ElementLeader)
+            {
+                continue;
+            }
+            Soldier localLeader = GetLocalLeader(soldier);
+
+            // No element leader (shouldn't happen with the current role assignment): fall back to the squad leader
+            var (elementAnchor, elementNavAnchor) = elementAnchors.TryGetValue(soldier.Element, out var found)
+                ? found
+                : (anchor, navAnchor);
+            UpdateSoldierSlot(soldier, localLeader, elementAnchor, elementNavAnchor, heading, desiredFormation, delta);
+        }
+    }
+
+    /// <summary>
+    /// Moves soldier to its slot behind its local leader's predicted position or goal and returns the softened goal.
+    /// </summary>
+    private Vector3 UpdateSoldierSlot(Soldier soldier, Soldier localLeader, Vector3 anchor, Vector3 navAnchor,
+        Vector3 heading, Formation formation, double delta)
+    {
+        Vector3 back = -heading;              // +Z points behind the leader
+        float fan = Mathf.DegToRad(formation.FanAngle);
+        Vector3 offsetVector = soldier.Element switch
+        {
+            SquadElement.LeftFlank  => back.Rotated(Vector3.Up, -fan),
+            SquadElement.RightFlank => back.Rotated(Vector3.Up,  fan),
+            _ => back,              // Core: straight behind
+        };
+
+        int slot = GetSlot(soldier);
+        Vector3 formationOffset = offsetVector * formation.DesiredOffset * slot;
+
+        // Adding "randomized" drift so the soldiers look less robotic
+        Vector3 drift = heading * soldier.Drift;
+
+        // The slot might be on the other side of a wall which might cause characters to path around a long way
+        // so we pathfind from the local leader's anchor within a small area and pick that location
+        float searchRadius = 2.0f * slot;
+        Vector3 goal = SoftenSlot(navAnchor, anchor + formationOffset + drift, searchRadius);
+        Vector3 referencePosition = localLeader.GlobalPosition + formationOffset;
+
+        PredictedLocations[soldier] = goal;
+        ReferenceLocations[soldier] = referencePosition;
+
+        if (soldier.GlobalPosition.DistanceTo(goal) > 1.0f)
+        {
+            soldier.MoveTo(goal);
+            soldier.DesiredFacing = DestinationFacing;
+        }
+
+        Vector3 soldierToReference = (referencePosition - soldier.GlobalPosition).Flat();
+        float along = soldierToReference.Dot(heading);
+        float t = Mathf.Clamp(Mathf.Abs(along) / CatchupDistance, 0f, 1f);
+        float speedMultiplierTarget = along > 0
+            ? Mathf.Lerp(1f, MaxMovementSpeedMultiplier, t)
+            : Mathf.Lerp(1f, MinMovementSpeedMultiplier, t);
+
+        // smoothing out the movement speed up/down
+        soldier.SpeedMultiplier = (float)Mathf.MoveToward(soldier.SpeedMultiplier, speedMultiplierTarget, MovementSpeedMultiplierInterpolationSpeed * delta);
+
+        return goal;
     }
 
     /// <summary>Called every physics tick while formation debug drawing is on (F1).</summary>
@@ -302,7 +334,6 @@ public partial class Squad
             }
         }
 
-        int index = 0;
         foreach(Soldier soldier in Members)
         {
             Soldier localLeader = GetLocalLeader(soldier);
@@ -316,13 +347,14 @@ public partial class Squad
             Color SpeedMultiplierTextColor = soldier.SpeedMultiplier > 1f ? Colors.Green : Colors.Red;
             DebugDraw.Text(soldier.GlobalPosition + new Vector3(0f, 1f, 0f), $"{soldier.SpeedMultiplier:F2}", SpeedMultiplierTextColor);
 
-            if (PredictedLocations.Count > index)
+            if (PredictedLocations.TryGetValue(soldier, out Vector3 predicted))
             {
-                DebugDraw.Circle(PredictedLocations[index], 0.5f, Colors.Orange);
-                DebugDraw.Circle(ReferenceLocations[index], 0.5f, Colors.Black.Lightened(0.5f));
+                DebugDraw.Circle(predicted, 0.5f, Colors.Orange);
             }
-
-            index++;
+            if (ReferenceLocations.TryGetValue(soldier, out Vector3 reference))
+            {
+                DebugDraw.Circle(reference, 0.5f, Colors.Black.Lightened(0.5f));
+            }
         }
     }
 }

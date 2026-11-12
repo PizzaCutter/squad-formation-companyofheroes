@@ -52,3 +52,6 @@ There is no win condition. Select a squad, give it move orders across different 
 - Kill and reinforce soldiers to see roles get reassigned.
 - Destroy obstacles while a squad is moving.
 - Slow down time and use the F1 to F4 overlays to see the movement targets and paths.
+
+## AI usage
+I used AI tools to generate boilerplate code for this project (project setup, camera, selection and other scaffolding). This let me focus my own effort on the actual subject of the sandbox: squad formation and squad movement. The formation and movement logic is my own work.
